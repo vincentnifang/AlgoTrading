@@ -1,5 +1,5 @@
 __author__ = 'vincent'
-
+import db,util
 
 class Future():
     __price = 0
@@ -28,6 +28,10 @@ class Future():
     def to_dict(self):
         return {"price": self.__price, "maturity": self.__maturity, "trade": self.__trade, "date": self.__date,
                 "tick": self.__tick}
+
+    def get_current_price(self):
+        future_dict = db.find_future(self.__maturity)
+        return util.to_HSIFuture(future_dict).get_future_price()
 
 
 class HSIFuture():

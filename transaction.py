@@ -1,5 +1,5 @@
 __author__ = 'vincent'
-
+import util,bs,db
 
 class Transaction():
     __future = []  # future
@@ -75,7 +75,7 @@ class Transaction():
                 "trade_type": self.__trade_type, "tick": self.__tick}
 
     def get_delta(self, s, r):
-        delta = 0
+        delta = 0.0
         for co in self.__call_option:
             delta = delta + co.get_delta(s, r)
         for po in self.__put_option:
@@ -85,12 +85,50 @@ class Transaction():
 
 
     def get_cost(self):
-        cost = 0
+        cost = 0.0
         for co in self.__call_option:
             cost = cost + co.get_trade() * co.get_price()
         for po in self.__put_option:
             cost = cost + po.get_trade() * po.get_price()
         for fu in self.__future:
             cost = cost + fu.get_trade() * fu.get_price()
+        return cost
+
+    # TODO ??
+    def get_normal_volatility(self):
+        vol = 0.0
+        for co in self.__call_option:
+            temp_normal_vol = db.find_normal_volatility(co.get_strike_price(), co.get_maturity(), co.get_option_type)
+            k = co.get_trade() * co.get_option_type()
+            vol = vol + k * temp_normal_vol
+        for po in self.__put_option:
+            temp_normal_vol = db.find_normal_volatility(po.get_strike_price(), po.get_maturity(), po.get_option_type)
+            k = po.get_trade() * po.get_option_type()
+            vol = vol + k * temp_normal_vol
+        return vol
 
 
+    def get_current_volatility(self, date, hsi_price, R):
+        vol = 0.0
+        for co in self.__call_option:
+            time_to_maturity = util.time_to_maturity(co.get_maturity(), date)
+            temp_vol = bs.get_volatility_quick(hsi_price, co.get_strike_price(), R, time_to_maturity, co.get_current_price(), co.get_option_type())
+            k = co.get_trade() * co.get_option_type()
+            vol = vol + k * temp_vol
+        for po in self.__put_option:
+            time_to_maturity = util.time_to_maturity(po.get_maturity(), date)
+            temp_vol = bs.get_volatility_quick(hsi_price, po.get_strike_price(), R, time_to_maturity, po.get_current_price(), po.get_option_type())
+            k = po.get_trade() * po.get_option_type()
+            vol = vol + k * temp_vol
+
+        return vol
+
+    def get_current_position_price(self):
+        price = 0.0
+        for co in self.__call_option:
+            price = price + co.get_trade() * co.get_current_price()
+        for po in self.__put_option:
+            price = price + po.get_trade() * po.get_current_price()
+        for fu in self.__future:
+            price = price + fu.get_trade() * fu.get_current_price()
+        return price

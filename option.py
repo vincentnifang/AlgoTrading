@@ -1,5 +1,5 @@
 __author__ = 'vincent'
-import bs, util
+import bs, util, db
 
 
 class Option():
@@ -43,6 +43,17 @@ class Option():
     def get_volatility(self, s, r):
         return bs.get_volatility_quick(s, self.__strike_price, r, util.time_to_maturity(self.__maturity, self.__date),
                                        self.get_price(), self.__option_type)
+
+    def get_current_price(self):
+        option_dict = db.find_option(self.__maturity, self.__strike_price, self.__option_type)
+        return util.to_HSIOption(option_dict).get_option_price()
+
+    def get_maturity(self):
+        return self.__maturity
+
+    def get_option_type(self):
+        return self.__option_type
+
 
 
 class HSIOption():
