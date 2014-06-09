@@ -81,6 +81,8 @@ def find_volatility_by_key(k):
 def find_all_volatility_key():
     return mydb.Volatility.distinct("k")
 
+def remove_all_volatility():
+    mydb.Volatility.remove()
 
 def save_normal_volatility(strike_price, maturity, option_type, volatility):
     sql = {"$set": {"strike_price": strike_price, "volatility": volatility, "maturity": maturity, "option_type": option_type}}
@@ -90,5 +92,9 @@ def save_normal_volatility(strike_price, maturity, option_type, volatility):
 
 
 def find_normal_volatility(strike_price, maturity, option_type):
+
     return mydb.NormalVolatility.find_one(
-        {"strike_price": strike_price, "maturity": maturity, "option_type": option_type}, {"volatility": 1})
+        {"strike_price": strike_price, "maturity": maturity, "option_type": option_type})
+
+def remove_all_normal_volatility():
+    mydb.NormalVolatility.remove()

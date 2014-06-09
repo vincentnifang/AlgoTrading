@@ -3,19 +3,19 @@ import db, util, numpy
 
 # get hsi price by tick
 def get_hsi_price(date, tick):
-    for i in xrange(10):
-        price = db.find_hsi_price(date, tick)
-        if price != None:
-            return price
-        t = util.tick_convert_to_seconds(tick) + i
-        tick = util.seconds_convert_to_tick(t)
-    return None
-
+    return float(db.find_hsi_price(date, tick)["price"])
 
 # clear future and option information of yesterday
-def clearAllDB():
+def clearTempDB():
     db.remove_all_future()
     db.remove_all_option()
+
+def clearALLDB():
+    db.remove_all_future()
+    db.remove_all_option()
+    db.remove_all_position()
+    db.remove_all_volatility()
+    db.remove_all_normal_volatility()
 
 
 def save_today_volatility(date, today_volatility):
@@ -34,7 +34,9 @@ def save_normal_volatility():
     for k in db.find_all_volatility_key():
         vol_list = db.find_volatility_by_key(k)
         strike_price, maturity, option_type = k
-        db.save_normal_volatility(strike_price, maturity, option_type, numpy.mean(vol_list["volatility"]))
+        str = "volatility"
+        normal_vol = util.cal_str_mean(vol_list, str)
+        db.save_normal_volatility(strike_price, maturity, option_type, normal_vol)
 
 # get at-the-money option
 def get_atm_option(tick, hsi_price, maturity, option_type):

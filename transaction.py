@@ -91,23 +91,27 @@ class Transaction():
             cost = cost + co.get_trade() * co.get_price()
         for po in self.__put_option:
             cost = cost + po.get_trade() * po.get_price()
-        for fu in self.__future:
-            cost = cost + fu.get_trade() * fu.get_price()
+        # for fu in self.__future:
+        #     cost = cost + fu.get_trade() * fu.get_price()
         return cost
 
     # TODO ??
     def get_normal_volatility(self):
         vol = 0.0
         for co in self.__call_option:
-            temp_normal_vol = db.find_normal_volatility(co.get_strike_price(), co.get_maturity(), co.get_option_type)
+            temp_normal_vol = db.find_normal_volatility(co.get_strike_price(), co.get_maturity(), co.get_option_type())
             # k = co.get_trade() * co.get_option_type()
             # vol = vol + k * temp_normal_vol
-            vol = vol + temp_normal_vol
+            if temp_normal_vol == None:
+                return 999999.0
+            vol = vol + temp_normal_vol["volatility"]
         for po in self.__put_option:
-            temp_normal_vol = db.find_normal_volatility(po.get_strike_price(), po.get_maturity(), po.get_option_type)
+            temp_normal_vol = db.find_normal_volatility(po.get_strike_price(), po.get_maturity(), po.get_option_type())
             # k = po.get_trade() * po.get_option_type()
             # vol = vol + k * temp_normal_vol
-            vol = vol + temp_normal_vol
+            if temp_normal_vol == None:
+                return 999999.0
+            vol = vol + temp_normal_vol["volatility"]
         return vol
 
     def get_current_volatility(self, date, hsi_price, R):
@@ -135,8 +139,8 @@ class Transaction():
             price = price + co.get_trade() * co.get_current_price()
         for po in self.__put_option:
             price = price + po.get_trade() * po.get_current_price()
-        for fu in self.__future:
-            price = price + fu.get_trade() * fu.get_current_price()
+        # for fu in self.__future:
+        #     price = price + fu.get_trade() * fu.get_current_price()
         return price
 
     def print_log(self):
@@ -145,6 +149,6 @@ class Transaction():
             print c.print_log()
         for p in self.get_put_option():
             print p.print_log()
-        for f in self.get_future():
-            print f.print_log()
+        # for f in self.get_future():
+        #     print f.print_log()
         print "--------------------------------------------"

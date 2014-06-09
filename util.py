@@ -40,31 +40,31 @@ def tick_convert_to_seconds(tick):
 
 
 def seconds_convert_to_tick(t):
-    hour = int(t / 3600)
-    min = int((t - 3600 * hour) / 60)
+    hour = int(float(t) / 3600)
+    min = int((float(t) - 3600 * hour) / 60)
     second = t - 3600 * hour - 60 * min
     return str(hour) + str(min) + str(second)
 
 
 def time_to_maturity(maturity, date):
     if maturity in ['K', 'W']:
-        return (20121130 - date) / 360
+        return (20131130 - float(date)) / 360
     if maturity in ['L', 'X']:
-        return (20121130 - date + 31) / 360
+        return (20131130 - float(date) + 31) / 360
 
 
 # format opt json to class HSIOption
 def to_HSIOption(opt):
-    return HSIOption(opt['strike_price'], opt['maturity'], opt['option_type'], opt['date'], opt['tick'],
-                     opt['last_trade_price'], opt['last_trade_time'], opt['accumulated_num'], opt['ask_price'],
-                     opt['bid_price'])
+    return HSIOption(float(opt['strike_price']), opt['maturity'], opt['option_type'], opt['date'], opt['tick'],
+                     float(opt['last_trade_price']), opt['last_trade_time'], float(opt['accumulated_num']), float(opt['ask_price']),
+                     float(opt['bid_price']))
 
 
 # format opt json to class Option
 def to_option(opts):
     options_list = []
     for opt in opts:
-        option = Option(opt['price'], opt['strike_price'], opt['maturity'], opt['option_type'], opt['trade'],
+        option = Option(float(opt['price']), float(opt['strike_price']), opt['maturity'], opt['option_type'], opt['trade'],
                         opt['date'], opt['tick'])
         options_list.append(option)
     return options_list
@@ -76,8 +76,8 @@ def to_future(futs):
 
 
 def to_HSIFuture(fut):
-    return HSIFuture(fut['tick'], fut['date'], fut['maturity'], fut['last_trade_price'], fut['last_trade_time'],
-                     fut['accumulated_num'], fut['ask_price'], fut['bid_price'])
+    return HSIFuture(fut['tick'], fut['date'], fut['maturity'], float(fut['last_trade_price']), fut['last_trade_time'],
+                     float(fut['accumulated_num']), float(fut['ask_price']), float(fut['bid_price']))
 
 
 # format position to transaction, return id and Transaction
@@ -91,8 +91,16 @@ def to_transaction(position):
     trade_type = position['trade_type']
     tick = position['tick']
     date = position['date']
-    return position['id'], Transaction(future, call_option, put_option, trade_type, tick, date)
+    return position['_id'], Transaction(future, call_option, put_option, trade_type, tick, date)
 
 # is current number between left and right
 def range_in_defined(left, current, right):
     return max(left, current) == min(current, right)
+
+def cal_str_mean(list,str):
+    sum = 0.0
+    cout = 0
+    for value in list[str]:
+        sum += float(value)
+        cout += 1
+    return sum/float(cout)

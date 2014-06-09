@@ -59,10 +59,10 @@ class Option():
             trade = "buy"
         else:
             trade = "sell"
-        print "option strike price:" + self.__strike_price
+        print "option strike price:" + str(self.__strike_price)
         print "option maturity:" + self.__maturity
         print trade + "this" + self.__option_type + "option" + "on" + self.__date + "at" + self.__tick
-        print "option price is" + self.__price
+        print "option price is" + str(self.__price)
 
 
 class HSIOption():
@@ -116,7 +116,7 @@ class HSIOption():
     def to_sql(self):
         return {
             "$set": {"strike_price": self.__strike_price, "maturity": self.__maturity,
-                     "option_type": self.__option_type, "time": self.__tick, "date": self.__date,
+                     "option_type": self.__option_type, "tick": self.__tick, "date": self.__date,
                      "last_trade_price": self.__last_trade_price, "last_trade_time": self.__last_trade_time,
                      "accumulated_num": self.__accumulated_num, "ask_price": self.__ask_price,
                      "bid_price": self.__bid_price}}
