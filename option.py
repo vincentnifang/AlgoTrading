@@ -54,6 +54,15 @@ class Option():
     def get_option_type(self):
         return self.__option_type
 
+    def print_log(self):
+        if self.__trade == 1:
+            trade = "buy"
+        else:
+            trade = "sell"
+        print "option strike price:" + self.__strike_price
+        print "option maturity:" + self.__maturity
+        print trade + "this" + self.__option_type + "option" + "on" + self.__date + "at" + self.__tick
+        print "option price is" + self.__price
 
 
 class HSIOption():

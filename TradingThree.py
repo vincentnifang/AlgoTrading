@@ -250,7 +250,7 @@ def adjustment_position(tick, hsi_price, maturity):
 # 3) profit > 5%
 # 4) stoploss > 5%
 # 5) Gamma Slope < 10 degree ??
-def close_position(tick, hsi_price, maturity):
+def close_position(tick, hsi_price, maturity, PL):
     for position in db.find_all_position():
         # close_position(tran)
         id, tran = util.to_transaction(position)
@@ -260,15 +260,30 @@ def close_position(tick, hsi_price, maturity):
         pl = current_position_price - tran.get_cost()
         if current_volatility > tran.get_normal_volatility():
             # implied volatility back to normal value
+            tran.print_log()
             db.remove_position(id)
-            return pl
-
-        elif abs(pl) / tran.get_cost() > 0.05:
+            print "close position:"
+            print "implied volatility back to normal value"
+            print "pl is " + pl
+            PL += pl
+        elif pl / tran.get_cost() > 0.05:
             # 3) profit > 5%
             # 4) stoploss > 5%
+            tran.print_log()
             db.remove_position(id)
-            return pl
-
+            print "close position:"
+            print "profit > 5%"
+            print "pl is " + pl
+            PL += pl
+        elif pl / tran.get_cost() < -0.05:
+            # 4) stoploss > 5%
+            tran.print_log()
+            db.remove_position(id)
+            print "close position:"
+            print "stoploss > 5%"
+            print "pl is " + pl
+            PL += pl
+    return PL
 
 if __name__ == '__main__':
     ts.clearAllDB()
@@ -283,8 +298,6 @@ if __name__ == '__main__':
         reader = util.read_csvfile(csvfile)
         filename = str(f)
         date = filename.split('/')[9].split('.')[0]
-        # buffer_take_position = []
-        # buffer_close_position = []
         sche = 0
         today_volatility = {}
 
@@ -306,7 +319,7 @@ if __name__ == '__main__':
                     # adjustment
                     adjustment_position(tick, hsi_price, maturity)
                     # close position
-                    PL += close_position(tick, hsi_price, maturity)
+                    close_position(tick, hsi_price, maturity, PL)
         ts.save_today_volatility(date, today_volatility)
         ts.save_normal_volatility()
         yesterday = date

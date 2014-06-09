@@ -100,14 +100,15 @@ class Transaction():
         vol = 0.0
         for co in self.__call_option:
             temp_normal_vol = db.find_normal_volatility(co.get_strike_price(), co.get_maturity(), co.get_option_type)
-            k = co.get_trade() * co.get_option_type()
-            vol = vol + k * temp_normal_vol
+            # k = co.get_trade() * co.get_option_type()
+            # vol = vol + k * temp_normal_vol
+            vol = vol + temp_normal_vol
         for po in self.__put_option:
             temp_normal_vol = db.find_normal_volatility(po.get_strike_price(), po.get_maturity(), po.get_option_type)
-            k = po.get_trade() * po.get_option_type()
-            vol = vol + k * temp_normal_vol
+            # k = po.get_trade() * po.get_option_type()
+            # vol = vol + k * temp_normal_vol
+            vol = vol + temp_normal_vol
         return vol
-
 
     def get_current_volatility(self, date, hsi_price, R):
         vol = 0.0
@@ -115,14 +116,16 @@ class Transaction():
             time_to_maturity = util.time_to_maturity(co.get_maturity(), date)
             temp_vol = bs.get_volatility_quick(hsi_price, co.get_strike_price(), R, time_to_maturity,
                                                co.get_current_price(), co.get_option_type())
-            k = co.get_trade() * co.get_option_type()
-            vol = vol + k * temp_vol
+            # k = co.get_trade() * co.get_option_type()
+            # vol = vol + k * temp_vol
+            vol = vol + temp_vol
         for po in self.__put_option:
             time_to_maturity = util.time_to_maturity(po.get_maturity(), date)
             temp_vol = bs.get_volatility_quick(hsi_price, po.get_strike_price(), R, time_to_maturity,
                                                po.get_current_price(), po.get_option_type())
-            k = po.get_trade() * po.get_option_type()
-            vol = vol + k * temp_vol
+            # k = po.get_trade() * po.get_option_type()
+            # vol = vol + k * temp_vol
+            vol = vol + temp_vol
 
         return vol
 
@@ -135,3 +138,13 @@ class Transaction():
         for fu in self.__future:
             price = price + fu.get_trade() * fu.get_current_price()
         return price
+
+    def print_log(self):
+        print "--------------------------------------------"
+        for c in self.get_call_option():
+            print c.print_log()
+        for p in self.get_put_option():
+            print p.print_log()
+        for f in self.get_future():
+            print f.print_log()
+        print "--------------------------------------------"

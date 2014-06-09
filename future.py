@@ -33,6 +33,9 @@ class Future():
         future_dict = db.find_future(self.__maturity)
         return util.to_HSIFuture(future_dict).get_future_price()
 
+    def print_log(self):
+        pass
+
 
 class HSIFuture():
     __tick = 0
