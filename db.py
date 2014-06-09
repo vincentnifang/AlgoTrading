@@ -10,6 +10,7 @@ mydb = client.mydb
 # mydb.HSI : HSI information
 # mydb.Position : all not close transaction
 # mydb.Volatility : former volatility {date, maturity, strike_price, option_type, vol}
+# mydb.NormalVolatility : normal volatility {maturity, strike_price, option_type, vol} mean of (mydb.Volatility)
 
 def update_future(maturity, sql):
     mydb.Future.update({"maturity": maturity}, sql, upsert=True)
@@ -44,17 +45,16 @@ def find_hsi_price(date, tick):
     return mydb.HSI.find_one({"date": date, "tick": tick})
 
 
-def insert_position(sql):
-    mydb.Position.insert(sql)
+def insert_position(data):
+    mydb.Position.insert(data)
 
 
-def update_position(id, sql):
-    mydb.Position.update()
-    # TODO
+def update_position(id, data):
+    mydb.Position.update({"_id": id}, {"$set": data})
 
 
 def remove_position(id):
-    mydb.Position.remove(id)
+    mydb.Position.remove({"_id": id})
 
 
 def find_all_position():
@@ -65,23 +65,27 @@ def remove_all_position():
     mydb.Position.remove()
 
 
-def save_volatility(date, strike_price, maturity, option_type, volatility, sql):
-    mydb.Volatility.insert({"date": date, "strike_price": strike_price, "volatility": volatility, "maturity": maturity,
-                            "option_type": option_type}, sql, upsert=True)
+def save_volatility(date, strike_price, maturity, option_type, volatility):
+    k = (strike_price, maturity, option_type)
+    mydb.Volatility.insert({"date": date, "k": k, "volatility": volatility})
 
 
 def find_volatility(date, strike_price, maturity, option_type):
-    return mydb.Volatility.find_one(
-        {"date": date, "strike_price": strike_price, "maturity": maturity, "option_type": option_type})
+    k = (strike_price, maturity, option_type)
+    return mydb.Volatility.find_one({"date": date, "k": k})
 
 
-def find_all_volatility(strike_price):
-    return mydb.Volatility.find({"strike_price": strike_price})
+def find_volatility_by_key(k):
+    return mydb.Volatility.find({"k": k})
+
+def find_all_volatility_key():
+    return mydb.Volatility.distinct("k")
 
 
-def save_normal_volatility(strike_price, volatility, maturity, option_type, sql):
-    mydb.NormalVolatility.insert(
-        {"strike_price": strike_price, "volatility": volatility, "maturity": maturity, "option_type": option_type}, sql,
+def save_normal_volatility(strike_price, maturity, option_type, volatility):
+    sql = {"$set": {"strike_price": strike_price, "volatility": volatility, "maturity": maturity, "option_type": option_type}}
+    mydb.NormalVolatility.update(
+        {"strike_price": strike_price, "maturity": maturity, "option_type": option_type}, sql,
         upsert=True)
 
 

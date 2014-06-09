@@ -1,5 +1,6 @@
 __author__ = 'vincent'
-import util,bs,db
+import util, bs, db
+
 
 class Transaction():
     __future = []  # future
@@ -112,12 +113,14 @@ class Transaction():
         vol = 0.0
         for co in self.__call_option:
             time_to_maturity = util.time_to_maturity(co.get_maturity(), date)
-            temp_vol = bs.get_volatility_quick(hsi_price, co.get_strike_price(), R, time_to_maturity, co.get_current_price(), co.get_option_type())
+            temp_vol = bs.get_volatility_quick(hsi_price, co.get_strike_price(), R, time_to_maturity,
+                                               co.get_current_price(), co.get_option_type())
             k = co.get_trade() * co.get_option_type()
             vol = vol + k * temp_vol
         for po in self.__put_option:
             time_to_maturity = util.time_to_maturity(po.get_maturity(), date)
-            temp_vol = bs.get_volatility_quick(hsi_price, po.get_strike_price(), R, time_to_maturity, po.get_current_price(), po.get_option_type())
+            temp_vol = bs.get_volatility_quick(hsi_price, po.get_strike_price(), R, time_to_maturity,
+                                               po.get_current_price(), po.get_option_type())
             k = po.get_trade() * po.get_option_type()
             vol = vol + k * temp_vol
 

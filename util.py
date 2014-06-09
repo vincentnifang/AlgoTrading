@@ -93,3 +93,6 @@ def to_transaction(position):
     date = position['date']
     return position['id'], Transaction(future, call_option, put_option, trade_type, tick, date)
 
+# is current number between left and right
+def range_in_defined(left, current, right):
+    return max(left, current) == min(current, right)

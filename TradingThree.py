@@ -4,6 +4,8 @@ import bs, util, time, db, numpy
 import option, future, transaction
 from pymongo import MongoClient
 
+import TradingService as ts
+
 Option = option.Option
 HSIOption = option.HSIOption
 Future = future.Future
@@ -16,7 +18,7 @@ local_path = '/Users/vincent/Documents/HK/HKU/FP/DATA/Parsed_HSI_Options_201311/
 
 timer_interval = 300
 
-vol = 0.01
+bandwidth = 0.01
 
 init_vol = 0.10
 
@@ -50,6 +52,7 @@ PL = 0
 # 4) stoploss > 5%
 # 5) Gamma Slope < 10 degree ??
 """
+
 
 # init raw data to var
 def format_raw():
@@ -109,22 +112,6 @@ def save_tick_data():
     return maturity
 
 
-# get hsi price by tick
-def get_hsi_price(date, tick):
-    for i in xrange(10):
-        price = db.find_hsi_price(date, tick)
-        if price != None:
-            return price
-        t = util.tick_convert_to_seconds(tick) + i
-        tick = util.seconds_convert_to_tick(t)
-    return None
-
-
-# is current number between left and right
-def range_in_defined(left, current, right):
-    return max(left, current) == min(current, right)
-
-
 # get option whose gamma is the biggest
 def get_max_gamma(option_gamma):
     return max(option_gamma, key=option_gamma.get)
@@ -154,30 +141,14 @@ def get_option_last_trade_time(option, tick, accumulated_num):
         return last_trade_time
 
 
-
 # cal compared volatility
 def fn(date, c_strike_price, p_strike_price):
     if date != None:
-        return find_last_volatility(date, c_strike_price) + find_last_volatility(date, p_strike_price)
+        return ts.find_volatility_by_date(date, c_strike_price) + ts.find_volatility_by_date(date, p_strike_price)
     else:
         return init_vol * 2
 
 
-def save_volatility(date, today_volatility):
-    for strike_price_object in today_volatility.keys():
-        volatility = numpy.mean(today_volatility[strike_price_object])
-        sql = '' #TODO
-        strike_price, maturity, option_type = strike_price_object
-        db.save_volatility(date, strike_price, maturity, option_type, volatility, sql)
-
-
-def find_last_volatility(date, strike_price_object):
-    strike_price, maturity, option_type = strike_price_object
-    return db.find_volatility(date, strike_price, maturity, option_type)
-
-def save_normal_volatility():
-    pass
-# TODO
 # compare volatility
 def compare_volatility(fn, volatility):
     return volatility < fn
@@ -186,23 +157,25 @@ def compare_volatility(fn, volatility):
 # take position
 def take_position(tick, date, maturity, hsi_price):
     option_gamma = {}
-    left = hsi_price * (1 - vol)
-    right = hsi_price * (1 + vol)
+    left = hsi_price * (1 - bandwidth)
+    right = hsi_price * (1 + bandwidth)
 
     if maturity in ['K', 'W']:
         for call_option_dict in db.find_all_option('K', 'call'):
             call = util.to_HSIOption(call_option_dict)
             strike_price = call.get_strike_price()
             put = util.to_HSIOption(db.find_option('W', strike_price, 'put'))
-            if None not in [call, put] and range_in_defined(left, strike_price, right):
+            if None not in [call, put] and util.range_in_defined(left, strike_price, right):
                 time_to_maturity = util.time_to_maturity(maturity, date)
 
                 # c_volatility = bs.get_ATF_volatility(call.get_option_price(), hsi_price, time_to_maturity)
-                c_volatility = bs.get_volatility_quick(hsi_price,strike_price,R,time_to_maturity,call.get_option_price(),'call')
+                c_volatility = bs.get_volatility_quick(hsi_price, strike_price, R, time_to_maturity,
+                                                       call.get_option_price(), 'call')
                 call_delta = bs.get_delta(hsi_price, strike_price, R, time_to_maturity, c_volatility, 'call')
 
                 # p_volatility = bs.get_ATF_volatility(put.get_option_price(), hsi_price, time_to_maturity)
-                p_volatility = bs.get_volatility_quick(hsi_price,strike_price,R,time_to_maturity,put.get_option_price(),'put')
+                p_volatility = bs.get_volatility_quick(hsi_price, strike_price, R, time_to_maturity,
+                                                       put.get_option_price(), 'put')
                 put_delta = bs.get_delta(hsi_price, strike_price, R, time_to_maturity, p_volatility, 'put')
 
                 c_vol_list = today_volatility[(strike_price, 'K', 'call')]
@@ -232,16 +205,9 @@ def take_position(tick, date, maturity, hsi_price):
     return tran
 
 
-# get at-the-money option
-def get_atm_option(tick, hsi_price, maturity, option_type):
-    option_list = db.find_all_option(maturity, option_type)
-    option_list.sort(lambda option: abs(option.get_strike_price() - hsi_price))
-    return util.to_HSIOption(option_list[0]).generate_option(1)
-
-
 # adjust the position
 def get_adjustment_option(tick, hsi_price, maturity, current_delta, option_type):
-    option = get_atm_option(tick, hsi_price, maturity, option_type)
+    option = ts.get_atm_option(tick, hsi_price, maturity, option_type)
     if option.get_price() == 999999.0:
         return None
     delta = option.get_delta(hsi_price, R)
@@ -304,15 +270,8 @@ def close_position(tick, hsi_price, maturity):
             return pl
 
 
-transactions = []
-
-
-def clearAllDB():
-    pass
-    # TODO
-
 if __name__ == '__main__':
-    clearAllDB()
+    ts.clearAllDB()
 
     all_files = util.read_raw_filename(local_path)
     start = time.time()
@@ -337,7 +296,7 @@ if __name__ == '__main__':
 
             if maturity != '' and len(product) > 5:
                 if util.tick_convert_to_seconds(tick) > float(sche):
-                    hsi_price = get_hsi_price(date, tick)
+                    hsi_price = ts.get_hsi_price(date, tick)
                     sche = sche + timer_interval
                     # take position
                     transaction = take_position(tick, date, maturity, hsi_price)
@@ -348,7 +307,7 @@ if __name__ == '__main__':
                     adjustment_position(tick, hsi_price, maturity)
                     # close position
                     PL += close_position(tick, hsi_price, maturity)
-        save_volatility(date, today_volatility)
-        save_normal_volatility()
+        ts.save_today_volatility(date, today_volatility)
+        ts.save_normal_volatility()
         yesterday = date
         print "today's PL", PL
