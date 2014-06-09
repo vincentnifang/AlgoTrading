@@ -246,7 +246,7 @@ def adjustment_position(tick, hsi_price, maturity):
 # 1) hold to maturity
 # 2) implied volatility back to normal value
 # 3) profit > 5%
-# 4) stoploss > 5%
+# 4) stoploss < -5%
 # 5) Gamma Slope < 10 degree ??
 def close_position(tick, hsi_price, maturity, PL):
     for position in db.find_all_position():
@@ -317,7 +317,7 @@ if __name__ == '__main__':
                         # adjustment
                         adjustment_position(tick, hsi_price, maturity)
                         # close position
-                        close_position(tick, hsi_price, maturity, PL)
+                        PL = close_position(tick, hsi_price, maturity, PL)
 
         ts.save_today_volatility(date, today_volatility)
         ts.save_normal_volatility()
