@@ -2,13 +2,12 @@ __author__ = 'vincent'
 
 import os
 import csv
-import option, future, transaction
 
-Option = option.Option
-HSIOption = option.HSIOption
-Future = future.Future
-HSIFuture = future.HSIFuture
-Transaction = transaction.Transaction
+from option import Option
+from option import HSIOption
+from future import Future
+from future import HSIFuture
+from transaction import Transaction
 
 p = '/Users/vincent/Documents/HK/HKU/FP/DATA/Parsed_HSI_Options_201311/'
 
@@ -97,10 +96,4 @@ def to_transaction(position):
 def range_in_defined(left, current, right):
     return max(left, current) == min(current, right)
 
-def cal_str_mean(list,str):
-    sum = 0.0
-    cout = 0
-    for value in list[str]:
-        sum += float(value)
-        cout += 1
-    return sum/float(cout)
+

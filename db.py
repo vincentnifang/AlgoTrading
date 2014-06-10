@@ -12,8 +12,16 @@ mydb = client.mydb
 # mydb.Volatility : former volatility {date, maturity, strike_price, option_type, vol}
 # mydb.NormalVolatility : normal volatility {maturity, strike_price, option_type, vol} mean of (mydb.Volatility)
 
+Future = {}
+Option_Buffer = {}
+
+c_k = {}
+c_l = {}
+p_w = {}
+p_x = {}
+
 def update_future(maturity, sql):
-    mydb.Future.update({"maturity": maturity}, sql, upsert=True)
+    mydb.Future.update({"maturity": maturity}, {"$set": sql}, upsert=True)
 
 
 def find_future(maturity):
@@ -24,24 +32,91 @@ def remove_all_future():
     mydb.Future.remove()
 
 
+# def update_option(maturity, strike_price, option_type, sql):
+#     mydb.Option.update({"maturity": maturity, "strike_price": strike_price, "option_type": option_type}, {"$set": sql}, upsert=True)
+#
+#
+# def find_option(maturity, strike_price, option_type):
+#     return mydb.Option.find_one({"maturity": maturity, "strike_price": strike_price, "option_type": option_type})
+#
+#
+# def find_all_option(maturity, option_type):
+#     return mydb.Option.find({"maturity": maturity, "option_type": option_type})
+
 def update_option(maturity, strike_price, option_type, sql):
-    mydb.Option.update({"maturity": maturity, "strike_price": strike_price, "option_type": option_type}, sql,
-                       upsert=True)
+    if maturity == "K":
+        c_k[strike_price] = sql
+    elif maturity == "L":
+        c_l[strike_price] = sql
+    elif maturity == "W":
+        p_w[strike_price] = sql
+    elif maturity == "X":
+        p_x[strike_price] = sql
+    else:
+        pass
+    # if (maturity, option_type) in Option_Buffer:
+    #     opt = Option_Buffer[(maturity, option_type)]
+    #     opt[str(strike_price)] = sql
+    # else:
+    #     Option_Buffer[(maturity, option_type)] = {str(strike_price):sql}
+
+    # mydb.Option.update({"maturity": maturity, "strike_price": strike_price, "option_type": option_type}, {"$set": sql}, upsert=True)
 
 
 def find_option(maturity, strike_price, option_type):
-    return mydb.Option.find_one({"maturity": maturity, "strike_price": strike_price, "option_type": option_type})
+    if maturity == "K":
+        return c_k.get(strike_price)
+    elif maturity == "L":
+        return c_l.get(strike_price)
+    elif maturity == "W":
+        return p_w.get(strike_price)
+    elif maturity == "X":
+        return p_x.get(strike_price)
+
+    return None
+
+    # if (maturity, option_type) in Option_Buffer:
+    #     opt = Option_Buffer[(maturity, option_type)]
+    #     if str(strike_price) in opt:
+    #         return opt[str(strike_price)]
+    # return None
+
+    # return mydb.Option.find_one({"maturity": maturity, "strike_price": strike_price, "option_type": option_type})
 
 
 def find_all_option(maturity, option_type):
-    return mydb.Option.find({"maturity": maturity, "option_type": option_type})
+    if maturity == "K":
+        return c_k.values()
+    elif maturity == "L":
+        return c_l.values()
+    elif maturity == "W":
+        return p_w.values()
+    elif maturity == "X":
+        return p_x.values()
+    else:
+        return None
+
+    # if (maturity, option_type) in Option_Buffer:
+    #     opt = Option_Buffer[(maturity, option_type)]
+    #     return opt.values()
+    # return None
+
+    # return mydb.Option.find({"maturity": maturity, "option_type": option_type})
 
 
 def remove_all_option():
+    Option_Buffer.clear()
+    c_k.clear()
+    c_l.clear()
+    p_w.clear()
+    p_x.clear()
     mydb.Option.remove()
 
 
 def find_hsi_price(date, tick):
+    print date, ":",tick
+    import util
+    print "convert:",util.tick_convert_to_seconds(tick)
     return mydb.HSI.find_one({"date": date, "tick": tick})
 
 
@@ -66,12 +141,12 @@ def remove_all_position():
 
 
 def save_volatility(date, strike_price, maturity, option_type, volatility):
-    k = (strike_price, maturity, option_type)
+    k = str(strike_price) + maturity + option_type
     mydb.Volatility.insert({"date": date, "k": k, "volatility": volatility})
 
 
 def find_volatility(date, strike_price, maturity, option_type):
-    k = (strike_price, maturity, option_type)
+    k = str(strike_price) + maturity + option_type
     return mydb.Volatility.find_one({"date": date, "k": k})
 
 
@@ -84,17 +159,14 @@ def find_all_volatility_key():
 def remove_all_volatility():
     mydb.Volatility.remove()
 
-def save_normal_volatility(strike_price, maturity, option_type, volatility):
-    sql = {"$set": {"strike_price": strike_price, "volatility": volatility, "maturity": maturity, "option_type": option_type}}
-    mydb.NormalVolatility.update(
-        {"strike_price": strike_price, "maturity": maturity, "option_type": option_type}, sql,
-        upsert=True)
+def save_normal_volatility(k, volatility):
+    sql = {"$set": {"k": k, "volatility": volatility}}
+    mydb.NormalVolatility.update({"k": k}, sql, upsert=True)
 
 
 def find_normal_volatility(strike_price, maturity, option_type):
-
-    return mydb.NormalVolatility.find_one(
-        {"strike_price": strike_price, "maturity": maturity, "option_type": option_type})
+    k = str(strike_price) + maturity + option_type
+    return mydb.NormalVolatility.find_one({"k": k})
 
 def remove_all_normal_volatility():
     mydb.NormalVolatility.remove()

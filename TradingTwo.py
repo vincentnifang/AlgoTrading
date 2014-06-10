@@ -1,16 +1,14 @@
 __author__ = 'vincent'
 
 import time
-import option
-import future
-import transaction
 import util
 
-Option = option.Option
-HSIOption = option.HSIOption
-Future = future.Future
-HSIFuture = future.HSIFuture
-Transaction = transaction.Transaction
+
+from option import Option
+from option import HSIOption
+from future import Future
+from future import HSIFuture
+from transaction import Transaction
 
 # from pymongo import MongoClient
 #
@@ -222,6 +220,7 @@ if __name__ == '__main__':
         buffer_close_position = []
 
         sche = 0
+        start = time.time()
 
         for row in reader:
             tick = row[0]  # tick time
@@ -310,12 +309,17 @@ if __name__ == '__main__':
                             print "ALL PL", PL
                             print ".............................................."
 
+        end = time.time()
+
+        print "use time", (end - start)
+
         if date in ['20131127', '20131128', '20131129', '20131130']:
             print date
             for tran in transactions:
                 print tran.to_dict()
 
         csvfile.close()
+
 
     end = time.time()
 

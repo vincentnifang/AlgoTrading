@@ -82,7 +82,7 @@ class HSIFuture():
         return Future(self.get_future_price(), self.__maturity, trade, self.__date, self.__tick)
 
     def to_sql(self):
-        return {"$set": {"tick": self.__tick, "date": self.__date, "maturity": self.__maturity,
+        return {"tick": self.__tick, "date": self.__date, "maturity": self.__maturity,
                          "last_trade_price": self.__last_trade_price,
                          "last_trade_time": self.__last_trade_time, "accumulated_num": self.__accumulated_num,
-                         "ask_price": self.__ask_price, "bid_price": self.__bid_price}}
+                         "ask_price": self.__ask_price, "bid_price": self.__bid_price}

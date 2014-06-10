@@ -62,8 +62,8 @@ class Transaction():
     def to_dict(self):
         futures = self.__future
         fs = []
-        for f in futures:
-            fs.append(f.to_dict())
+        # for f in futures:
+        #     fs.append(f.to_dict())
         call_options = self.__call_option
         cos = []
         for co in call_options:
@@ -136,8 +136,12 @@ class Transaction():
     def get_current_position_price(self):
         price = 0.0
         for co in self.__call_option:
+            if co.get_current_price() == 999999.0:
+                return None
             price = price + co.get_trade() * co.get_current_price()
         for po in self.__put_option:
+            if po.get_current_price() == 999999.0:
+                return None
             price = price + po.get_trade() * po.get_current_price()
         # for fu in self.__future:
         #     price = price + fu.get_trade() * fu.get_current_price()
