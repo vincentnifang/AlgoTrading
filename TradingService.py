@@ -3,8 +3,9 @@ import db, util, numpy
 
 # get hsi price by tick
 def get_hsi_price(date, tick):
-    if db.find_hsi_price(date, tick) != None:
-        return float(db.find_hsi_price(date, tick)["price"])
+    hsi = db.find_hsi_price(date, tick)
+    if hsi != None:
+        return float(hsi["price"])
     return "tick"
 # clear future and option information of yesterday
 def clearTempDB():
@@ -27,7 +28,9 @@ def save_today_volatility(date, today_volatility):
 
 def find_volatility_by_date(date, strike_price_object):
     strike_price, maturity, option_type = strike_price_object
-    return db.find_volatility(date, strike_price, maturity, option_type)
+    ret = db.find_volatility(date, strike_price, maturity, option_type)
+    if ret == None: return {}
+    return ret
 
 
 def save_normal_volatility():

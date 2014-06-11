@@ -14,15 +14,15 @@ R = 0.005
 
 local_path = '/Users/vincent/Documents/HK/HKU/FP/DATA/Parsed_HSI_Options_201311/'
 
-timer_interval = 3000
+timer_interval = 300
 
 bandwidth = 0.01
 
 init_vol = 0.2
 
-profit = 0.05
+profit = 0.1
 
-stoploss = 0.05
+stoploss = -0.05
 
 PL = 0.0
 
@@ -179,6 +179,7 @@ def take_position(tick, date, maturity, hsi_price):
                     # p_volatility = bs.get_ATF_volatility(put.get_option_price(), hsi_price, time_to_maturity)
                     p_volatility = bs.get_volatility_quick(hsi_price, strike_price, R, time_to_maturity,
                                                            put.get_option_price(), 'put')
+
                     put_delta = bs.get_delta(hsi_price, strike_price, R, time_to_maturity, p_volatility, 'put')
 
                     if (strike_price, 'K', 'call') not in today_volatility:
@@ -212,7 +213,7 @@ def get_adjustment_option(tick, hsi_price, maturity, current_delta, option_type)
         trade_type = 1
     option = ts.get_atm_option(tick, hsi_price, maturity, option_type, trade_type)
     if option.get_price() == 999999.0:
-        return None
+        return 0, 0
 
     delta = option.get_delta(hsi_price, R)
     count = abs(current_delta) / float(delta)
@@ -263,7 +264,7 @@ def close_position(tick, hsi_price, maturity, PL):
         current_position_price = tran.get_current_position_price()
         if current_position_price is not None:
             pl = current_position_price - tran.get_cost()
-            if current_volatility > tran.get_normal_volatility():
+            if current_volatility > tran.get_normal_volatility() and pl > 5:
                 # implied volatility back to normal value
                 tran.print_log()
                 db.remove_position(id)
@@ -272,22 +273,21 @@ def close_position(tick, hsi_price, maturity, PL):
                 print "tick:", tick
                 print "pl is ", pl
                 PL += pl
-            elif pl / tran.get_cost() > 0.05:
+            elif pl / tran.get_cost() > profit:
                 # 3) profit > 5%
-                # 4) stoploss > 5%
                 tran.print_log()
                 db.remove_position(id)
                 print "close position:"
-                print "profit > 5%"
+                print "profit > "+str(profit)
                 print "tick:", tick
                 print "pl is ", pl
                 PL += pl
-            elif pl / tran.get_cost() < -0.05:
+            elif pl / tran.get_cost() < stoploss:
                 # 4) stoploss > 5%
                 tran.print_log()
                 db.remove_position(id)
                 print "close position:"
-                print "stoploss > 5%"
+                print "stoploss < "+str(stoploss)
                 print "tick:", tick
                 print "pl is ", pl
                 PL += pl
@@ -310,48 +310,27 @@ if __name__ == '__main__':
         ts.clearTempDB()
         today_volatility = {}
         s = time.time()
-        p = 1
+        hsi_interval = 1.0
         for row in reader: # one tick
             tick, product, last_trade_price, accumulated_num, bid_price, ask_price = format_raw()
 
-            a = int(tick[0:2])
-            if a == 9 and p == 1:
-                print "9"
-                p = 0
-            if p == 10 and p == 0:
-                print "10"
-                p = 1
-            if a == 12 and p == 1:
-                print "12"
-                p = 0
-            if p == 13 and p == 0:
-                print "13"
-                p = 1
-            if a == 14 and p == 1:
-                print "14"
-                p = 0
-            if p == 15 and p == 0:
-                print "11"
-                p = 1
-            if a == 16 and p == 1:
-                print "10"
-                p = 0
-
             if sche == 0:
                 sche = float(util.tick_convert_to_seconds(tick))
-                print "init:::", sche
             maturity = save_tick_data()
 
-
             if util.tick_convert_to_seconds(tick) > float(sche) and maturity != '' and len(product) > 5:
-                print "-----------------"
+                # print "-----------------"
                 hsi_price = ts.get_hsi_price(date, tick)
-                print "sche", sche
-                print "hsi", hsi_price
-                if hsi_price == "tick": sche += 1.0
-                sche += timer_interval
+                if hsi_price == "tick":
+                    # print "tick:",tick
+                    # print "sche:", sche
+                    sche = util.tick_convert_to_seconds(tick) + hsi_interval
+                    hsi_interval *= 2
+                    # print hsi_interval
                 if hsi_price not in [None, 0.0, 0, "tick"]:
-
+                    # print "hsi_price", hsi_price
+                    hsi_interval = 1.0
+                    sche += timer_interval
                     # take position
                     transaction = take_position(tick, date, maturity, hsi_price)
                     # if isinstance(transaction, Transaction):

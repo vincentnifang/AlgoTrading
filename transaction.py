@@ -1,6 +1,7 @@
 __author__ = 'vincent'
 import util, bs, db
 
+vol_adjust = 1.1
 
 class Transaction():
     __future = []  # future
@@ -104,14 +105,14 @@ class Transaction():
             # vol = vol + k * temp_normal_vol
             if temp_normal_vol == None:
                 return 999999.0
-            vol = vol + temp_normal_vol["volatility"]
+            vol = vol + temp_normal_vol["volatility"] * vol_adjust
         for po in self.__put_option:
             temp_normal_vol = db.find_normal_volatility(po.get_strike_price(), po.get_maturity(), po.get_option_type())
             # k = po.get_trade() * po.get_option_type()
             # vol = vol + k * temp_normal_vol
             if temp_normal_vol == None:
                 return 999999.0
-            vol = vol + temp_normal_vol["volatility"]
+            vol = vol + temp_normal_vol["volatility"] * vol_adjust
         return vol
 
     def get_current_volatility(self, date, hsi_price, R):

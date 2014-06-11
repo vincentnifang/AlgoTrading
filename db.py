@@ -114,9 +114,6 @@ def remove_all_option():
 
 
 def find_hsi_price(date, tick):
-    print date, ":",tick
-    import util
-    print "convert:",util.tick_convert_to_seconds(tick)
     return mydb.HSI.find_one({"date": date, "tick": tick})
 
 

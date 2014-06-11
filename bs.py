@@ -70,9 +70,9 @@ def get_volatility_quick(s, k, r, t, option_price, option_type):
     @param option_price: The price of the option
     @return: Sigma (implied volatility)
     """
-    if option_price < 0.99 * (s - k * math.exp(-t * r)):
-        # check for arbitrage violations. Option price is too low if this happens
-        return 0.0
+    # if option_price < 0.99 * (s - k * math.exp(-t * r)):
+    #     # check for arbitrage violations. Option price is too low if this happens
+    #     return 0.0
 
     MAX_ITERATIONS = 100
     ACCURACY = 1.0e-5
