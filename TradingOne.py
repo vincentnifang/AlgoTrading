@@ -108,23 +108,23 @@ for f in allFile:
                             # hsi = 999999
                         else:
                             hsi = float(hsix[1])  # lasttrade
-                        if (not ask == 0.0) and (not hsi == 0.0) and ask < hsi - x + 50:
+                        if (not ask == 0.0) and (not hsi == 0.0) and ask < hsi - x:
                             if product not in options:
-                                print "# long call short future when call < future - x"
-                                print "time:", t
-                                print "long: ", product, " short: HISX3"
-                                print "product ask is ", ask
-                                if hsi == 0.0:
-                                    print "-------------------------------------------------"
-                                    ncount += 1
-                                print "HISX3 lasttrade is ", hsi
-                                print "HISX3 last time is ", hsix[0]
-                                print "x is ", x
-                                print "P/L: ", hsi - x - ask
+                                # print "# long call short future when call < future - x"
+                                # print "time:", t
+                                # print "long: ", product, " short: HISX3"
+                                # print "product ask is ", ask
+                                # print "HISX3 lasttrade is ", hsi
+                                # print "HISX3 last time is ", hsix[0]
+                                # print "x is ", x
+                                # print "P/L: ", hsi - x - ask
                                 # print numOfHSIX
                                 PL.append(hsi - x - ask)
                                 # options.append(product)
                                 count += 1
+
+                                print date, "     ", t, "     ", product, "     ", "+", "     ", ask, "     "
+                                print date, "     ", t, "     ", "HISX3", "     ", "-", "     ", hsi, "     ", hsi - x - ask, "     lock the profit"
 
 
                 elif m == 'L':
@@ -136,23 +136,25 @@ for f in allFile:
                             # hsi = 999999
                         else:
                             hsi = float(hsiz[1])  # lasttrade
-                        if (not ask == 0.0) and (not hsi == 0.0) and ask < hsi - x + 50:
+                        if (not ask == 0.0) and (not hsi == 0.0) and ask < hsi - x:
                             if product not in options:
-                                print "# long call short future when call < future - x"
-                                print "time:", t
-                                print "long: ", product, " short: HISZ3"
-                                print "product ask is ", ask
-                                if hsi == 0.0:
-                                    print "-------------------------------------------------"
-                                    ncount += 1
-                                print "HISZ3 lasttrade is ", hsi
-                                print "HISZ3 last time is ", hsiz[0]
-                                print "x is ", x
-                                print "P/L: ", hsi - x - ask
+                                # print "# long call short future when call < future - x"
+                                # print "time:", t
+                                # print "long: ", product, " short: HISZ3"
+                                # print "product ask is ", ask
+                                # print "HISZ3 lasttrade is ", hsi
+                                # print "HISZ3 last time is ", hsiz[0]
+                                # print "x is ", x
+                                # print "P/L: ", hsi - x - ask
                                 # print numOfHSIX
                                 PL.append(hsi - x - ask)
                                 # options.append(product)
                                 count += 1
+
+
+                                print date, "     ", t, "     ", product, "     ", "+", "     ", ask, "     "
+                                print date, "     ", t, "     ", "HISZ3     ", "     ", "-", "     ", hsi, "     ", hsi - x - ask, "     lock the profit"
+
 
                 elif m == 'W':
                     # put option at Nov
@@ -165,23 +167,25 @@ for f in allFile:
                             # hsi = 999999
                         else:
                             hsi = float(hsix[1])  # lasttrade
-                        if (not ask == 0.0) and (not hsi == 0.0) and ask < x - hsi + 50:
+                        if (not ask == 0.0) and (not hsi == 0.0) and ask < x - hsi:
                             if product not in options:
-                                print "# long put long future when put < x - future"
-                                print "time:", t
-                                print "long: ", product, " short: HISX3"
-                                print "product ask is ", ask
-                                if hsi == 0.0:
-                                    print "-------------------------------------------------"
-                                    ncount += 1
-                                print "HISX3 lasttrade is ", hsi
-                                print "HISX3 last time is ", hsix[0]
-                                print "x is ", x
-                                print "P/L: ", x - hsi - ask
+                                # print "# long put long future when put < x - future"
+                                # print "time:", t
+                                # print "long: ", product, " short: HISX3"
+                                # print "product ask is ", ask
+                                # print "HISX3 lasttrade is ", hsi
+                                # print "HISX3 last time is ", hsix[0]
+                                # print "x is ", x
+                                # print "P/L: ", x - hsi - ask
                                 # print numOfHSIX
                                 PL.append(x - hsi - ask)
                                 # options.append(product)
                                 count += 1
+
+
+                                print date, "     ", t, "     ", product, "     ", "+", "     ", ask, "     "
+                                print date, "     ", t, "     ", "HISX3", "     ", "+", "     ", hsi, "     ", x - hsi - ask, "     lock the profit"
+
                 elif m == 'X':
                     # put option at Dec
                     if int(numOfHSIZ) > 0:
@@ -191,23 +195,25 @@ for f in allFile:
                             # hsi = 999999
                         else:
                             hsi = float(hsiz[1])  # lasttrade
-                        if (not ask == 0.0) and (not hsi == 0.0) and ask < x - hsi + 50:
+                        if (not ask == 0.0) and (not hsi == 0.0) and ask < x - hsi:
                             if product not in options:
-                                print "#  long put long future when put < x - future"
-                                print "time:", t
-                                print "long: ", product, " short: HISZ3"
-                                print "product ask is ", ask
-                                if hsi == 0.0:
-                                    print "-------------------------------------------------"
-                                    ncount += 1
-                                print "HISZ3 lasttrade is ", hsi
-                                print "HISZ3 last time is ", hsiz[0]
-                                print "x is ", x
-                                print "P/L: ", x - hsi - ask
+                                # print "#  long put long future when put < x - future"
+                                # print "time:", t
+                                # print "long: ", product, " short: HISZ3"
+                                # print "product ask is ", ask
+                                # print "HISZ3 lasttrade is ", hsi
+                                # print "HISZ3 last time is ", hsiz[0]
+                                # print "x is ", x
+                                # print "P/L: ", x - hsi - ask
                                 # print numOfHSIX
                                 PL.append(x - hsi - ask)
                                 # options.append(product)
                                 count += 1
+
+
+                                print date, "     ", t, "     ", product, "     ", "+", "     ", ask, "     "
+                                print date, "     ", t, "     ", "HISZ3", "     ", "+", "     ", hsi, "     ", x - hsi - ask, "     lock the profit"
+
                 else:
                     # print "-------------------------------------------others is ", product
                     ncount +=1
@@ -235,3 +241,22 @@ print "ALL P/L is ", sum(PL)
 print "Count", count
 
 print "ncount", ncount
+
+print "Total trades = ", count
+print "Total Points Earned = ", sum(PL)
+print "Total Trading Day = ", len(allFile)
+print "Average Points Earned per Day = ", sum(PL) / len(allFile)
+
+"""
+2013-11-01 10:28:00	HSIX3	+	23199.0	23199
+2013-11-01 10:35:00	HSIX3	-	23214.0	23213		Cannot executed
+2013-11-01 10:38:00	HSIX3	-	23209.0	23209	10
+
+Total trades =  244
+Total Points Earned =  403.0
+Total Trading Day =  68
+Average Points Earned per Day =  5.92647058824
+Average Points Earned per TX =  1.65163934426
+Winning Percentage =0.672131147541
+
+"""
