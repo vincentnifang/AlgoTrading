@@ -15,6 +15,11 @@ class Future():
         self.__maturity = maturity
         self.__trade = trade
 
+    def get_date(self):
+        return self.__date
+
+    def get_tick(self):
+        return self.__tick
 
     def get_maturity(self):
         return self.__maturity
@@ -58,6 +63,11 @@ class HSIFuture():
         self.__ask_price = ask_price
         self.__bid_price = bid_price
 
+    def get_tick(self):
+        return self.__tick
+
+    def get_date(self):
+        return self.__date
 
     def get_accumulated_num(self):
         return self.__accumulated_num
@@ -73,7 +83,7 @@ class HSIFuture():
             return 999999.0
         if int(self.__tick) - int(self.__last_trade_time) < 5:
             return self.__last_trade_price
-        elif self.__ask_price - self.__bid_price < (self.__ask_price + self.__bid_price) / 2 * 0.002:
+        elif self.__ask_price - self.__bid_price < (self.__ask_price + self.__bid_price) / 2 * 0.001:
             return (self.__ask_price + self.__bid_price) / 2
         else:
             return 999999.0

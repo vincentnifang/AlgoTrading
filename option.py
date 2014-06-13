@@ -21,6 +21,12 @@ class Option():
         self.__tick = tick
 
 
+    def get_date(self):
+        return self.__date
+
+    def get_tick(self):
+        return self.__tick
+
     def get_strike_price(self):
         return self.__strike_price
 
@@ -103,7 +109,7 @@ class HSIOption():
             return 999999.0
         if int(self.__tick) - int(self.__last_trade_time) < 5:
             return self.__last_trade_price
-        elif self.__ask_price - self.__bid_price < (self.__ask_price + self.__bid_price) / 2 * 0.05:
+        elif self.__ask_price - self.__bid_price < (self.__ask_price + self.__bid_price) / 2 * 0.02:
             return (self.__ask_price + self.__bid_price) / 2
         else:
             return 999999.0

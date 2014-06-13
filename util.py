@@ -29,7 +29,7 @@ def read_raw_filename(path=p):
 def read_csvfile(csvfile):
     # filename = str(f)
     # date = filename.split('/')[9].split('.')[0]
-    print csvfile
+    # print csvfile
     reader = csv.reader(csvfile, delimiter=',')
     return reader
 

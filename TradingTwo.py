@@ -25,11 +25,12 @@ from transaction import Transaction
 
 local_path = '/Users/vincent/Documents/HK/HKU/FP/DATA/Parsed_HSI_Options_201311/'
 transactions = []
-commission = 4
+commission = 3
 timer_interval = 180
 PL = 0
 stoploss = 0.005
-tran_number = 0
+tran_number = 1
+
 
 
 def __cal_parity(c, p, k):
@@ -82,6 +83,43 @@ def get_option_last_trade_time(option, tick, accumulated_num):
     else:
         return last_trade_time
 
+def cal_pl(trade_call_option, trade_put_option, trade_future, strike_price,
+                    call_option_price, put_option_price, future_price):
+    return trade_call_option.get_trade()*trade_call_option.get_price() \
+            + trade_put_option.get_trade()*trade_put_option.get_price() \
+            + trade_future.get_trade()*trade_future.get_price() \
+            - trade_call_option.get_trade()*call_option_price \
+            - trade_put_option.get_trade()*put_option_price\
+            - trade_future.get_trade()*future_price
+
+def format_entry_trade(object):
+    if object.get_trade() == 1.0:
+        return "+"
+    elif object.get_trade() == -1.0:
+        return "-"
+    return None
+
+def format_exit_trade(object):
+    if object.get_trade() == 1.0:
+        return "-"
+    elif object.get_trade() == -1.0:
+        return "+"
+    return None
+
+def log(tran, trade_call_option, trade_put_option, trade_future, strike_price, date, tick,
+                    call_option_price, put_option_price, future_price):
+
+    p = cal_pl(trade_call_option,trade_put_option,trade_future,strike_price,call_option_price,put_option_price,future_price)
+    print trade_call_option.get_date(),"    ",trade_call_option.get_tick(),"    ","HSI"+str(int(trade_call_option.get_strike_price()))+trade_call_option.get_maturity()+str(3),"    ",format_entry_trade(trade_call_option),trade_call_option.get_price()
+    print trade_put_option.get_date(),"    ",trade_put_option.get_tick(),"    ","HSI"+str(int(trade_put_option.get_strike_price()))+trade_put_option.get_maturity()+str(3),"    ",format_entry_trade(trade_put_option),trade_put_option.get_price()
+    print trade_future.get_date(),"    ",trade_future.get_tick(),"    ","HSI"+trade_future.get_maturity()+str(3),"         ",format_entry_trade(trade_future),trade_future.get_price()
+
+    print date,"    ",tick,"    ","HSI"+str(int(trade_call_option.get_strike_price()))+trade_call_option.get_maturity()+str(3),"    ",format_exit_trade(trade_call_option),call_option_price
+    print date,"    ",tick,"    ","HSI"+str(int(trade_put_option.get_strike_price()))+trade_put_option.get_maturity()+str(3),"    ",format_exit_trade(trade_put_option),put_option_price
+    if p > 0:
+        print date,"    ",tick,"    ","HSI"+trade_future.get_maturity()+str(3),"         ",format_exit_trade(trade_future),future_price,"    ","signal",trade_type ,p
+    elif p<0:
+        print date,"    ",tick,"    ","HSI"+trade_future.get_maturity()+str(3),"         ",format_exit_trade(trade_future),future_price,"    ","signal",trade_type ,p,"    ","stop loss"
 
 def print_type1_log(tran, trade_call_option, trade_put_option, trade_future, strike_price, date, tick,
                     call_option_price, put_option_price, future_price):
@@ -100,6 +138,10 @@ def print_type1_log(tran, trade_call_option, trade_put_option, trade_future, str
     print "sell call(x,k)", call_option_price
     print "buy put(x,k)", put_option_price
     print "buy future(x)", future_price
+
+
+
+
 
 def print_type2_log(tran, trade_call_option, trade_put_option, trade_future, strike_price, date, tick,
                     call_option_price, put_option_price, future_price):
@@ -144,22 +186,32 @@ def close_position(tran, call_option, put_option, hsi):
 
     cal_future_price = __cal_parity(call_option_price, put_option_price, strike_price)
 
-    if trade_type == 1 and future_price < cal_future_price + commission:
+    # if trade_type == 1 and future_price < cal_future_price + commission:
+    # if trade_type == 1 and future_price < cal_future_price - commission:
+    if trade_type == 1 and future_price < cal_future_price:
         # close_position
         # we need sell call(x,k), buy put(x,k), buy future(x)
-        print_type1_log(tran, trade_call_option, trade_put_option, trade_future, strike_price, date, tick,
-                    call_option_price, put_option_price, future_price)
+        # print_type1_log(tran, trade_call_option, trade_put_option, trade_future, strike_price, date, tick,
+        #             call_option_price, put_option_price, future_price)
         pl = -trade_call_option.get_price() + trade_put_option.get_price() + \
              trade_future.get_price() + call_option_price - put_option_price - future_price
+
+        log(trade_type, trade_call_option, trade_put_option, trade_future, strike_price, date, tick,
+                    call_option_price, put_option_price, future_price)
         return pl
-    elif trade_type == 2 and future_price > cal_future_price - commission:
+    # elif trade_type == 2 and future_price > cal_future_price - commission:
+    # elif trade_type == 2 and future_price > cal_future_price + commission:
+    elif trade_type == 2 and future_price > cal_future_price:
         # close_position
         # we need buy call(x,k), sell put(x,k), sell future(x)
 
-        print_type2_log(tran, trade_call_option, trade_put_option, trade_future, strike_price, date, tick,
-                    call_option_price, put_option_price, future_price)
+        # print_type2_log(tran, trade_call_option, trade_put_option, trade_future, strike_price, date, tick,
+        #             call_option_price, put_option_price, future_price)
+
         pl = trade_call_option.get_price() + put_option_price + future_price - (
             trade_put_option.get_price() + trade_future.get_price() + call_option_price)
+        log(trade_type, trade_call_option, trade_put_option, trade_future, strike_price, date, tick,
+                    call_option_price, put_option_price, future_price)
         return pl
 
     # stop loss
@@ -168,18 +220,21 @@ def close_position(tran, call_option, put_option, hsi):
                trade_future.get_price() + call_option_price - put_option_price - future_price
         if temp < 0 and abs(temp) > abs(-trade_call_option.get_price() + trade_put_option.get_price() + \
                 trade_future.get_price()) * stoploss:
-            print "stoploss"
+            # print "stoploss"
+            log(trade_type, trade_call_option, trade_put_option, trade_future, strike_price, date, tick,
+                    call_option_price, put_option_price, future_price)
             pl = temp
-            print "pl", pl
+            # print "pl", pl
             return pl
     if trade_type == 2:
         temp = trade_call_option.get_price() + put_option_price + future_price - (
             trade_put_option.get_price() + trade_future.get_price() + call_option_price)
         if temp < 0 and abs(temp) > abs(
                                 trade_call_option.get_price() - trade_put_option.get_price() - trade_future.get_price()) * stoploss:
-            print "stoploss"
+            log(trade_type, trade_call_option, trade_put_option, trade_future, strike_price, date, tick,
+                    call_option_price, put_option_price, future_price)
             pl = temp
-            print "pl", pl
+            # print "pl", pl
             return pl
     return None
 
@@ -274,6 +329,7 @@ if __name__ == '__main__':
                 if util.tick_convert_to_seconds(tick) > float(sche):
                     sche = sche + timer_interval
                     # build transaction
+                    # if date not in ['20131127', '20131128', '20131129', '20131130']:
                     if maturity in ['K', 'W']:
                         transaction = build_transaction(c_k.get(strike_price, -1), p_w.get(strike_price, -1),
                                                         strike_price, hsix, tick, date)
@@ -302,19 +358,19 @@ if __name__ == '__main__':
 
                         if pl != None:
                             transactions.remove(tran)
-                            print "transaction:", tran_number
-                            print "pl of this tran", pl
+                            # print "transaction:", tran_number
+                            # print "pl of this tran", pl
                             tran_number += 1
                             PL = PL + pl
-                            print "ALL PL", PL
-                            print ".............................................."
+                            # print "ALL PL", PL
+                            # print ".............................................."
 
         end = time.time()
 
-        print "use time", (end - start)
+        # print "use time", (end - start)
 
         if date in ['20131127', '20131128', '20131129', '20131130']:
-            print date
+            # print date
             for tran in transactions:
                 print tran.to_dict()
 
@@ -325,8 +381,14 @@ if __name__ == '__main__':
 
     print "use time", (end - start)
 
-    print "left trans,", len(transactions)
+    print "left transaction", len(transactions)
 
     print "ALL P/L is ", PL
+
+    print "Total trades = ", tran_number-1
+    print "Total Points Earned = ", PL
+    print "Total Trading Day = ", len(all_files)
+    print "Average Points Earned per Day = ", PL / len(all_files)
+    print "Average Points Earned per Trade = ", PL / float(tran_number-1)
 
 
