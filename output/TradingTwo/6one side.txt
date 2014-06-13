@@ -1,0 +1,19 @@
+20131101      092353      HSI22800K3      - 611.0
+20131101      092356      HSI22800W3      + 184.0
+20131101      092356      HSIX3           + 23256.0
+20131101      093556      HSI22800K3      + 628.5
+20131101      093556      HSI22800W3      - 197.0
+20131101      093556      HSIX3           - 23230.0      signal 1 30.5
+
+left transaction 0
+Total trades =  1
+Total Points Earned =  30.5
+Total Trading Day =  1
+Average Points Earned per Day =  30.5
+Average Points Earned per Trade =  30.5
+
+commission = 6
+stop loss = 0.005
+timer interval = 180
+
+consider commission interval in take position
