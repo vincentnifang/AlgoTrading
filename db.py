@@ -136,6 +136,9 @@ def find_all_position():
 def remove_all_position():
     mydb.Position.remove()
 
+def count_all_position():
+    return mydb.Position.count()
+
 
 def save_volatility(date, strike_price, maturity, option_type, volatility):
     k = str(strike_price) + maturity + option_type

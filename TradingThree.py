@@ -18,13 +18,17 @@ timer_interval = 300
 
 bandwidth = 0.01
 
-init_vol = 0.2
+init_vol = 0.1
 
-profit = 0.1
+profit = 0.05
 
 stoploss = -0.05
 
 PL = 0.0
+
+Delta = 0.1
+
+delta_interval = 300
 
 
 # The Long Straddle and Gamma Scalping
@@ -200,23 +204,30 @@ def take_position(tick, date, maturity, hsi_price):
     if option_gamma == {}:
         return None
     call, put = get_max_gamma(option_gamma)
-    tran = Transaction([], [call.generate_option(1)], [put.generate_option(1)], 3, tick, date)
+    calls = map(lambda x:call.generate_option(1),range(0,2))
+    puts = map(lambda x:put.generate_option(1),range(0,2))
+    tran = Transaction([],calls,puts,3,tick,date)
+    # tran = Transaction([], [call.generate_option(1)], [put.generate_option(1)], 3, tick, date)
     db.insert_position(tran.to_dict())
     return tran
 
 
 # adjust the position
 def get_adjustment_option(tick, hsi_price, maturity, current_delta, option_type):
-    if current_delta >= 0:
-        trade_type = -1
-    else:
-        trade_type = 1
+    # if current_delta >= 0:
+    #     trade_type = -1
+    # else:
+    #     trade_type = 1
+    trade_type = 1
     option = ts.get_atm_option(tick, hsi_price, maturity, option_type, trade_type)
     if option.get_price() == 999999.0:
         return 0, 0
 
     delta = option.get_delta(hsi_price, R)
-    count = abs(current_delta) / float(delta)
+    # print "current_delta:", current_delta
+    # print "delta:", delta
+    count = abs(current_delta / float(delta))
+    # print "count", count
     if count < 1:
         return 0, 0
     else:
@@ -224,29 +235,32 @@ def get_adjustment_option(tick, hsi_price, maturity, current_delta, option_type)
 
 
 def adjustment_position(tick, hsi_price, maturity):
-    for position in db.find_all_position():
-        # adjustment(tran)
-        id, tran = util.to_transaction(position)
-        current_delta = tran.get_delta(hsi_price, R)
-        if abs(current_delta) <= 0.1:
-            return
-        if current_delta > 0.1:
-            # buy ATM put
-            count, option = get_adjustment_option(tick, hsi_price, maturity, current_delta, 'put')
-            puts = tran.get_put_option()
-            for i in xrange(count):
-                puts.append(option)
-            tran.set_put_option(puts)
+    if maturity in ['K', 'W']:
+        for position in db.find_all_position():
+            # adjustment(tran)
+            id, tran = util.to_transaction(position)
+            last_adjust_date, last_adjust_tick = tran.get_last_adjust_date_tick()
+            if int(date) != last_adjust_date or int(tick) - last_adjust_tick > delta_interval:
+                current_delta = tran.get_delta(hsi_price, R)
+                if abs(current_delta) <= Delta:
+                    return
+                if current_delta > Delta:
+                    # buy ATM put
+                    count, option = get_adjustment_option(tick, hsi_price, maturity, current_delta, 'put')
+                    puts = tran.get_put_option()
+                    for i in xrange(count):
+                        puts.append(option)
+                    tran.set_put_option(puts)
 
-        elif current_delta < -0.1:
-            # buy ATM call
-            count, option = get_adjustment_option(tick, hsi_price, maturity, current_delta, 'call')
-            calls = tran.get_call_option()
-            for i in xrange(count):
-                calls.append(option)
-            tran.set_put_option(calls)
+                elif current_delta < -Delta:
+                    # buy ATM call
+                    count, option = get_adjustment_option(tick, hsi_price, maturity, current_delta, 'call')
+                    calls = tran.get_call_option()
+                    for i in xrange(count):
+                        calls.append(option)
+                    tran.set_call_option(calls)
 
-        db.update_position(id, tran.to_dict())
+                db.update_position(id, tran.to_dict())
 
 
 # Close Position:
@@ -254,7 +268,6 @@ def adjustment_position(tick, hsi_price, maturity):
 # 2) implied volatility back to normal value
 # 3) profit > 5%
 # 4) stoploss < -5%
-# 5) Gamma Slope < 10 degree ??
 def close_position(tick, hsi_price, maturity, PL):
     for position in db.find_all_position():
         # close_position(tran)
@@ -262,9 +275,10 @@ def close_position(tick, hsi_price, maturity, PL):
 
         current_volatility = tran.get_current_volatility(date, hsi_price, R)
         current_position_price = tran.get_current_position_price()
-        if current_position_price is not None:
+        if current_position_price is not None: # and tran.get_payoff(hsi_price) <= abs(tran.get_cost())*profit
             pl = current_position_price - tran.get_cost()
-            if current_volatility > tran.get_normal_volatility() and pl > 5:
+
+            if current_volatility > tran.get_normal_volatility() and pl > 5 and False:
                 # implied volatility back to normal value
                 tran.print_log()
                 db.remove_position(id)
@@ -272,8 +286,10 @@ def close_position(tick, hsi_price, maturity, PL):
                 print "implied volatility back to normal value"
                 print "tick:", tick
                 print "pl is ", pl
+                print "hsi_price",hsi_price
+                print "tran.get_payoff(hsi_price):", tran.get_payoff(hsi_price)
                 PL += pl
-            elif pl / tran.get_cost() > profit:
+            elif pl / abs(tran.get_cost()) > profit:
                 # 3) profit > 5%
                 tran.print_log()
                 db.remove_position(id)
@@ -281,8 +297,10 @@ def close_position(tick, hsi_price, maturity, PL):
                 print "profit > "+str(profit)
                 print "tick:", tick
                 print "pl is ", pl
+                print "hsi_price",hsi_price
+                print "tran.get_payoff(hsi_price):", tran.get_payoff(hsi_price)
                 PL += pl
-            elif pl / tran.get_cost() < stoploss:
+            elif pl / abs(tran.get_cost()) < stoploss:
                 # 4) stoploss > 5%
                 tran.print_log()
                 db.remove_position(id)
@@ -290,6 +308,8 @@ def close_position(tick, hsi_price, maturity, PL):
                 print "stoploss < "+str(stoploss)
                 print "tick:", tick
                 print "pl is ", pl
+                print "hsi_price",hsi_price
+                print "tran.get_payoff(hsi_price):", tran.get_payoff(hsi_price)
                 PL += pl
     return PL
 
@@ -311,6 +331,7 @@ if __name__ == '__main__':
         today_volatility = {}
         s = time.time()
         hsi_interval = 1.0
+        end_hsi_price = 0.0
         for row in reader: # one tick
             tick, product, last_trade_price, accumulated_num, bid_price, ask_price = format_raw()
 
@@ -321,6 +342,7 @@ if __name__ == '__main__':
             if util.tick_convert_to_seconds(tick) > float(sche) and maturity != '' and len(product) > 5:
                 # print "-----------------"
                 hsi_price = ts.get_hsi_price(date, tick)
+
                 if hsi_price == "tick":
                     # print "tick:",tick
                     # print "sche:", sche
@@ -328,18 +350,24 @@ if __name__ == '__main__':
                     hsi_interval *= 2
                     # print hsi_interval
                 if hsi_price not in [None, 0.0, 0, "tick"]:
+                    end_hsi_price = hsi_price
                     # print "hsi_price", hsi_price
                     hsi_interval = 1.0
                     sche += timer_interval
                     # take position
                     transaction = take_position(tick, date, maturity, hsi_price)
+                    if db.count_all_position() is 0 and date not in ['20131127', '20131128', '20131129', '20131130']:
+                        transaction = take_position(tick, date, maturity, hsi_price)
                     # if isinstance(transaction, Transaction):
                     #     # buffer_take_position.append(transaction)
                     #     transactions.append(transaction)
-                    # adjustment
-                    adjustment_position(tick, hsi_price, maturity)
-                    # close position
-                    PL = close_position(tick, hsi_price, maturity, PL)
+                    else:
+                        # adjustment
+                        adjustment_position(tick, hsi_price, maturity)
+                        # close position
+                        PL = close_position(tick, hsi_price, maturity, PL)
+
+
 
         e = time.time()
         print "use", e-s
@@ -348,6 +376,14 @@ if __name__ == '__main__':
         yesterday = date
         print "today's PL", PL
 
+        # for position in db.find_all_position():
+        #     id, tran = util.to_transaction(position)
+        #     current_position_price = tran.get_current_position_price()
+        #     if id is not None:
+        #         print "payoff", tran.get_payoff(end_hsi_price)
+        #     if current_position_price is not None:
+        #         print "pl", current_position_price - tran.get_cost()
+        #         print "profit", current_position_price - tran.get_cost() / abs(tran.get_cost())
 
     ts.clearALLDB()
 

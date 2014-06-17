@@ -157,3 +157,31 @@ class Transaction():
         # for f in self.get_future():
         #     print f.print_log()
         print "--------------------------------------------"
+
+    def get_payoff(self, hsi_price):
+        payoff = 0
+        for co in self.__call_option:
+            payoff = payoff + co.get_trade() * (max(hsi_price - co.get_strike_price(), 0) - co.get_price())
+        for po in self.__put_option:
+            payoff = payoff + po.get_trade() * (max(po.get_strike_price() - hsi_price, 0) + po.get_price())
+        # print payoff
+        return payoff
+
+    def get_last_adjust_date_tick(self):
+        last_date, last_tick = 0,0
+        for co in self.__call_option:
+            date = co.get_date()
+            tick = co.get_tick()
+            if int(date) >= int(last_date):
+                last_date = int(date)
+                if int(tick) > int(last_tick):
+                    last_tick = int(tick)
+        for po in self.__put_option:
+            date = po.get_date()
+            tick = po.get_tick()
+            if int(date) >= int(last_date):
+                last_date = int(date)
+                if int(tick) > int(last_tick):
+                    last_tick = int(tick)
+        # print payoff
+        return last_date, last_tick
