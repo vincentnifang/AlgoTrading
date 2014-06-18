@@ -61,13 +61,19 @@ class Option():
     def get_option_type(self):
         return self.__option_type
 
-    def print_log(self):
+    def print_entry_log(self):
         if self.__trade == 1:
             trade = "+"
         else:
             trade = "-"
+        print self.__date,"     ",self.__tick,"     ","HSI"+str(int(self.__strike_price))+self.__maturity+str(3),"     ",trade,"     ",self.__price
 
-        print trade + "   " + str(self.__price)+ "       " + self.__option_type + "   " + self.__maturity + "   " + str(self.__strike_price) + "    "+ self.__date + "     " + self.__tick
+    def print_exit_log(self,date,tick):
+        if self.__trade == 1:
+            trade = "-"
+        else:
+            trade = "+"
+        print date,"     ",tick,"     ","HSI"+str(int(self.__strike_price))+self.__maturity+str(3),"     ",trade,"     ",self.get_current_price()
 
 
 class HSIOption():

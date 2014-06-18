@@ -148,14 +148,19 @@ class Transaction():
         #     price = price + fu.get_trade() * fu.get_current_price()
         return price
 
-    def print_log(self):
+    def print_entry_log(self):
         print "--------------------------------------------"
         for c in self.get_call_option():
-            print c.print_log()
+            print c.print_entry_log()
         for p in self.get_put_option():
-            print p.print_log()
+            print p.print_entry_log()
         # for f in self.get_future():
         #     print f.print_log()
+    def print_exit_log(self,date,tick):
+        for c in self.get_call_option():
+            print c.print_exit_log(date, tick)
+        for p in self.get_put_option():
+            print p.print_exit_log(date, tick)
         print "--------------------------------------------"
 
     def get_payoff(self, hsi_price):

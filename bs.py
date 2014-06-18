@@ -87,8 +87,10 @@ def get_volatility_quick(s, k, r, t, option_price, option_type):
             return sigma
         d1 = (math.log(s / k) + r * t) / (sigma * t_sqrt) + 0.5 * sigma * t_sqrt
         vega = s * t_sqrt * stats.norm.cdf(d1)
-        sigma = sigma + diff / vega
-
+        try:
+            sigma = sigma + diff / vega
+        except:
+            print "vega:", vega
     return sigma
 
 

@@ -30,6 +30,8 @@ Delta = 0.1
 
 delta_interval = 300
 
+count = 0
+
 
 # The Long Straddle and Gamma Scalping
 #
@@ -240,7 +242,7 @@ def adjustment_position(tick, hsi_price, maturity):
             # adjustment(tran)
             id, tran = util.to_transaction(position)
             last_adjust_date, last_adjust_tick = tran.get_last_adjust_date_tick()
-            if int(date) != last_adjust_date or int(tick) - last_adjust_tick > delta_interval:
+            if int(date) != last_adjust_date : #or int(tick) - last_adjust_tick > delta_interval
                 current_delta = tran.get_delta(hsi_price, R)
                 if abs(current_delta) <= Delta:
                     return
@@ -269,6 +271,7 @@ def adjustment_position(tick, hsi_price, maturity):
 # 3) profit > 5%
 # 4) stoploss < -5%
 def close_position(tick, hsi_price, maturity, PL):
+    count = 0
     for position in db.find_all_position():
         # close_position(tran)
         id, tran = util.to_transaction(position)
@@ -280,46 +283,52 @@ def close_position(tick, hsi_price, maturity, PL):
 
             if current_volatility > tran.get_normal_volatility() and pl > 5 and False:
                 # implied volatility back to normal value
-                tran.print_log()
+                tran.print_entry_log()
+                tran.print_exit_log(date,tick)
                 db.remove_position(id)
-                print "close position:"
+                # print "close position:"
                 print "implied volatility back to normal value"
-                print "tick:", tick
+                # print "tick:", tick
                 print "pl is ", pl
-                print "hsi_price",hsi_price
-                print "tran.get_payoff(hsi_price):", tran.get_payoff(hsi_price)
+                count += 1
+                # print "hsi_price",hsi_price
+                # print "tran.get_payoff(hsi_price):", tran.get_payoff(hsi_price)
                 PL += pl
             elif pl / abs(tran.get_cost()) > profit:
                 # 3) profit > 5%
-                tran.print_log()
+                tran.print_entry_log()
+                tran.print_exit_log(date,tick)
                 db.remove_position(id)
-                print "close position:"
+                # print "close position:"
                 print "profit > "+str(profit)
-                print "tick:", tick
+                # print "tick:", tick
                 print "pl is ", pl
-                print "hsi_price",hsi_price
-                print "tran.get_payoff(hsi_price):", tran.get_payoff(hsi_price)
+                count += 1
+                # print "hsi_price",hsi_price
+                # print "tran.get_payoff(hsi_price):", tran.get_payoff(hsi_price)
                 PL += pl
             elif pl / abs(tran.get_cost()) < stoploss:
                 # 4) stoploss > 5%
-                tran.print_log()
+                tran.print_entry_log()
+                tran.print_exit_log(date,tick)
                 db.remove_position(id)
-                print "close position:"
+                # print "close position:"
                 print "stoploss < "+str(stoploss)
-                print "tick:", tick
+                # print "tick:", tick
                 print "pl is ", pl
-                print "hsi_price",hsi_price
-                print "tran.get_payoff(hsi_price):", tran.get_payoff(hsi_price)
+                count += 1
+                # print "hsi_price",hsi_price
+                # print "tran.get_payoff(hsi_price):", tran.get_payoff(hsi_price)
                 PL += pl
-    return PL
+    return PL, count
 
 if __name__ == '__main__':
-
     all_files = util.read_raw_filename(local_path)
     start = time.time()
     print "start algo", start
     yesterday = None
     ts.clearALLDB()
+    trade_number = 0
 
     for f in all_files: # one day
         csvfile = file(f, 'rb')
@@ -355,26 +364,35 @@ if __name__ == '__main__':
                     hsi_interval = 1.0
                     sche += timer_interval
                     # take position
-                    transaction = take_position(tick, date, maturity, hsi_price)
-                    if db.count_all_position() is 0 and date not in ['20131127', '20131128', '20131129', '20131130']:
+                    # transaction = take_position(tick, date, maturity, hsi_price)
+                    # if db.count_all_position() is 0 and date not in ['20131127', '20131128', '20131129', '20131130']:
+                    #     transaction = take_position(tick, date, maturity, hsi_price)
+                    # # if isinstance(transaction, Transaction):
+                    # #     # buffer_take_position.append(transaction)
+                    # #     transactions.append(transaction)
+                    # else:
+                    #     # adjustment
+                    #     adjustment_position(tick, hsi_price, maturity)
+                    #     # close position
+                    #     PL, n = close_position(tick, hsi_price, maturity, PL)
+                    #     trade_number += n
+
+                    if date not in ['20131127', '20131128', '20131129', '20131130']:
                         transaction = take_position(tick, date, maturity, hsi_price)
-                    # if isinstance(transaction, Transaction):
-                    #     # buffer_take_position.append(transaction)
-                    #     transactions.append(transaction)
-                    else:
-                        # adjustment
-                        adjustment_position(tick, hsi_price, maturity)
-                        # close position
-                        PL = close_position(tick, hsi_price, maturity, PL)
+                    # adjustment
+                    adjustment_position(tick, hsi_price, maturity)
+                    # close position
+                    PL, n = close_position(tick, hsi_price, maturity, PL)
+                    trade_number += n
 
 
 
         e = time.time()
-        print "use", e-s
+        # print "use", e-s
         ts.save_today_volatility(date, today_volatility)
         ts.save_normal_volatility()
         yesterday = date
-        print "today's PL", PL
+        # print "today's PL", PL
 
         # for position in db.find_all_position():
         #     id, tran = util.to_transaction(position)
@@ -385,5 +403,11 @@ if __name__ == '__main__':
         #         print "pl", current_position_price - tran.get_cost()
         #         print "profit", current_position_price - tran.get_cost() / abs(tran.get_cost())
 
+
+    print "left transaction", db.count_all_position()
+    print "Total trades =", trade_number
+    print "Total Points Earned =", PL
+    print "Average Points Earned per Trade =", PL/float(trade_number)
     ts.clearALLDB()
+
 
