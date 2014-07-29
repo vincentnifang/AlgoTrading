@@ -34,6 +34,41 @@ def read_csvfile(csvfile):
     return reader
 
 
+def format_row(row):
+    tick = row[0]  # tick time
+    product = row[1]  # product name
+    last_trade_price = float(row[2])  # last trade price
+    accumulated_num = int(row[3])  # accumulated trade num
+    bid_price = float(row[5])  # first bid price
+    ask_price = float(row[16])  # first ask price
+    return tick, product, last_trade_price, accumulated_num, bid_price, ask_price
+
+# get last trade time of option
+def get_option_last_trade_time(option, tick, accumulated_num):
+    if option == None:
+        return tick
+    # accumulated = option['accumulated_num']
+    # last_trade_time = option['last_trade_time']
+    accumulated = option.get_accumulated_num()
+    last_trade_time = option.get_last_trade_time()
+    if accumulated < accumulated_num:
+        return tick
+    else:
+        return last_trade_time
+
+
+# get last trade time of future
+def get_future_last_trade_time(future, tick, accumulated_num):
+    if future == None:
+        return tick
+    accumulated = future['accumulated_num']
+    last_trade_time = future['last_trade_time']
+    if accumulated < accumulated_num:
+        return tick
+    else:
+        return last_trade_time
+
+
 def tick_convert_to_seconds(tick):
     return int(tick[0:2]) * 3600 + int(tick[2:4]) * 60 + int(tick[4:6])
 

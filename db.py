@@ -166,7 +166,16 @@ def save_normal_volatility(k, volatility):
 
 def find_normal_volatility(strike_price, maturity, option_type):
     k = str(strike_price) + maturity + option_type
-    return mydb.NormalVolatility.find_one({"k": k})
+    import re
+    p = re.compile('^.*'+maturity+'.*$')
+    return mydb.NormalVolatility.find({"k": p})
+    # return mydb.NormalVolatility.find_one({"k": k})
+
+def find_volatility_v2(date, strike_price,maturity, option_type):
+    import re
+    p = re.compile('^.*'+maturity+'.*$')
+    return mydb.Volatility.find({"date": date, "k": p})
+
 
 def remove_all_normal_volatility():
     mydb.NormalVolatility.remove()
