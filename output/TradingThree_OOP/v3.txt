@@ -976,3 +976,8 @@ win P: 2439.0
 loss L: -1616.0
 
 Process finished with exit code 0
+11 , 181.0
+12 , 2205.0
+13 , 2128.0
+18 , 1726.0
+19 , 823.0

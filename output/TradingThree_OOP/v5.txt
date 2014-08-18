@@ -720,3 +720,6 @@ win P: 2190.0
 loss L: -980.0
 
 Process finished with exit code 0
+12 , 2190.0
+13 , 2113.0
+19 , 1210.0
