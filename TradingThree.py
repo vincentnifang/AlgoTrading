@@ -324,6 +324,7 @@ def close_position(tick, hsi_price, maturity, PL):
 
 if __name__ == '__main__':
     all_files = util.read_raw_filename(local_path)
+
     start = time.time()
     print "start algo", start
     yesterday = None

@@ -20,6 +20,9 @@ c_l = {}
 p_w = {}
 p_x = {}
 
+def testDB():
+    return mydb.HSI.find().limit(30)
+
 def update_future(maturity, sql):
     mydb.Future.update({"maturity": maturity}, {"$set": sql}, upsert=True)
 
@@ -44,14 +47,18 @@ def remove_all_future():
 #     return mydb.Option.find({"maturity": maturity, "option_type": option_type})
 
 def update_option(maturity, strike_price, option_type, sql):
-    if maturity == "K":
+    if option_type == 'call':
         c_k[strike_price] = sql
-    elif maturity == "L":
-        c_l[strike_price] = sql
-    elif maturity == "W":
+    elif option_type == 'put':
         p_w[strike_price] = sql
-    elif maturity == "X":
-        p_x[strike_price] = sql
+    # if maturity == "K":
+    #     c_k[strike_price] = sql
+    # elif maturity == "L":
+    #     c_l[strike_price] = sql
+    # elif maturity == "W":
+    #     p_w[strike_price] = sql
+    # elif maturity == "X":
+    #     p_x[strike_price] = sql
     else:
         pass
     # if (maturity, option_type) in Option_Buffer:
@@ -85,14 +92,19 @@ def find_option(maturity, strike_price, option_type):
 
 
 def find_all_option(maturity, option_type):
-    if maturity == "K":
+    if option_type == 'call':
         return c_k.values()
-    elif maturity == "L":
-        return c_l.values()
-    elif maturity == "W":
+    elif option_type == 'put':
         return p_w.values()
-    elif maturity == "X":
-        return p_x.values()
+
+    # if maturity == "K":
+    #     return c_k.values()
+    # elif maturity == "L":
+    #     return c_l.values()
+    # elif maturity == "W":
+    #     return p_w.values()
+    # elif maturity == "X":
+    #     return p_x.values()
     else:
         return None
 

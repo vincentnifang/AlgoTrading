@@ -11,6 +11,10 @@ from transaction import Transaction
 
 p = '/Users/vincent/Documents/HK/HKU/FP/DATA/Parsed_HSI_Options_201311/'
 
+CodeTblPath= '/Users/vincent/Documents/GitHub/AlgoTrading/DerivatvCodeTbl.txt'
+HKFECalPath = '/Users/vincent/Documents/GitHub/AlgoTrading/HKFE-Calendar.csv'
+
+
 
 def read_raw_filename(path=p):
     root = path
@@ -81,11 +85,12 @@ def seconds_convert_to_tick(t):
 
 
 def time_to_maturity(maturity, date):
-    if maturity in ['K', 'W']:
-        return (20131130 - float(date)) / 360
-    if maturity in ['L', 'X']:
-        return (20131130 - float(date) + 31) / 360
+    return (float(get_maturity_date(date)) - float(date)) / 360
 
+def get_maturity_date(date):
+    for Date,IsExpiry,HK1,HK2,HKF1,HKF2,HKC1,HKC2,HKP1,HKP2 in read_csvfile(file(HKFECalPath, 'rb')):
+        if Date[0:4] == date[0:4] and Date[5:7] == date[4:6] and IsExpiry == 'Y':
+            return Date[0:4]+Date[5:7]+Date[8:10]
 
 # format opt json to class HSIOption
 def to_HSIOption(opt):
@@ -132,3 +137,20 @@ def range_in_defined(left, current, right):
     return max(left, current) == min(current, right)
 
 
+def get_no_tran_date(date):
+    d = int(get_maturity_date(date))
+    return [str(d-2),str(d-1),str(d)]
+
+
+def get_month(date):
+    file = open(CodeTblPath)
+    for line in file:
+        if line[0:3] == 'MTH':
+            pass
+        else:
+            mon = line[4:6]
+            if mon == date[4:6]:
+                call = line[7:8]
+                put = line[9:10]
+                fut = line[11:12]
+                return call,put,fut

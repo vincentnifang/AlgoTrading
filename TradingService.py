@@ -2,7 +2,7 @@ __author__ = 'vincent'
 import db, util, numpy
 from option import HSIOption
 
-def save_tick_data(date, tick, product, last_trade_price, accumulated_num, bid_price, ask_price):
+def save_tick_data(date, tick, product, last_trade_price, accumulated_num, bid_price, ask_price,call_month, put_month):
     maturity = ''
     if len(product) < 6:
         pass
@@ -27,17 +27,11 @@ def save_tick_data(date, tick, product, last_trade_price, accumulated_num, bid_p
         maturity = product[8]  # product type and maturity day
         strike_price = float(product[3:8])  # product strike price
         option_type = ''
-        if maturity == 'K':
+        if maturity == call_month:
             # call option at Nov
             option_type = 'call'
-        elif maturity == 'L':
-            # call option at Dec
-            option_type = 'call'
-        elif maturity == 'W':
+        elif maturity == put_month:
             # put option at Nov
-            option_type = 'put'
-        elif maturity == 'X':
-            # put option at Dec
             option_type = 'put'
         else:
             return maturity
@@ -125,14 +119,14 @@ def save_normal_volatility():
         db.save_normal_volatility(k, normal_vol)
 
 
-def get_init_vol():
+def get_init_vol(call_month,put_month):
     c = []
     p = []
     for key in db.find_all_volatility_key():
         for vol in db.find_volatility_by_key(key):
-            if vol["k"][7] == 'K':
+            if vol["k"][7] == call_month:
                 c.append(vol["volatility"])
-            if vol["k"][7] == 'W':
+            if vol["k"][7] == put_month:
                 p.append(vol["volatility"])
     return c, p
 

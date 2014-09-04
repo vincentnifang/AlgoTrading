@@ -64,12 +64,12 @@ class LongStaddle:
             left = self.hsi_price * (1 - bandwidth)
             right = self.hsi_price * (1 + bandwidth)
 
-            if self.maturity in ['K', 'W']:
-                for call_option_dict in db.find_all_option('K', 'call'):
+            if self.maturity in [call_month, put_month]:
+                for call_option_dict in db.find_all_option(call_month, 'call'):
                     # call = util.to_HSIOption(call_option_dict)
                     call = call_option_dict
                     strike_price = call.get_strike_price()
-                    put_option_dict = db.find_option('W', strike_price, 'put')
+                    put_option_dict = db.find_option(call_month, strike_price, 'put')
                     if put_option_dict is not None:
                         # put = util.to_HSIOption(db.find_option('W', strike_price, 'put'))
                         put = put_option_dict
@@ -85,22 +85,20 @@ class LongStaddle:
                                                                    put.get_option_price(), 'put')
                             put_delta = bs.get_delta(self.hsi_price, strike_price, R, time_to_maturity, p_volatility, 'put')
 
-                            if (strike_price, 'K', 'call') not in self.today_volatility:
-                                self.today_volatility[(strike_price, 'K', 'call')] = [c_volatility]
+                            if (strike_price, call_month, 'call') not in self.today_volatility:
+                                self.today_volatility[(strike_price, call_month, 'call')] = [c_volatility]
                             else:
-                                self.today_volatility[(strike_price, 'K', 'call')].append(c_volatility)
+                                self.today_volatility[(strike_price, call_month, 'call')].append(c_volatility)
 
-                            if (strike_price, 'W', 'put') not in self.today_volatility:
-                                self.today_volatility[(strike_price, 'W', 'put')] = [p_volatility]
+                            if (strike_price, put_month, 'put') not in self.today_volatility:
+                                self.today_volatility[(strike_price, put_month, 'put')] = [p_volatility]
                             else:
-                                self.today_volatility[(strike_price, 'W', 'put')].append(p_volatility)
+                                self.today_volatility[(strike_price, put_month, 'put')].append(p_volatility)
 
                             if True and (c_volatility > mean_vol and p_volatility > mean_vol):
                                 if abs(call_delta + put_delta) < 0.1:
-                                    if ts.compare_volatility(ts.fn(yesterday, (strike_price, 'K', 'call'), (strike_price, 'W', 'put'),[init_vol_k, init_vol_w]), c_volatility + p_volatility):
+                                    if ts.compare_volatility(ts.fn(yesterday, (strike_price, call_month, 'call'), (strike_price, put_month, 'put'),[init_vol_k, init_vol_w]), c_volatility + p_volatility):
                                         option_gamma[(call, put)] = bs.get_gamma(self.hsi_price, strike_price, R, time_to_maturity, c_volatility) + bs.get_gamma(self.hsi_price, strike_price,R, time_to_maturity,p_volatility)
-            elif self.maturity in ['L', 'X']:
-                pass
             if option_gamma == {}:
                 return None
             call, put = ts.get_max_gamma(option_gamma)
@@ -111,7 +109,7 @@ class LongStaddle:
             return tran
 
     def adjustment_position(self):
-        if self.maturity in ['K', 'W']:
+        if self.maturity in [call_month, put_month]:
             for position in db.find_all_position():
                 # adjustment(tran)
                 id, tran = util.to_transaction(position)
@@ -214,7 +212,7 @@ class LongStaddle:
         self.tick, self.product, self.last_trade_price, self.accumulated_num, self.bid_price, self.ask_price = util.format_row(row)
         if self.sche == 0:
             self.sche = float(util.tick_convert_to_seconds(self.tick))
-        self.maturity = ts.save_tick_data(self.date, self.tick, self.product, self.last_trade_price, self.accumulated_num, self.bid_price, self.ask_price)
+        self.maturity = ts.save_tick_data(self.date, self.tick, self.product, self.last_trade_price, self.accumulated_num, self.bid_price, self.ask_price,call_month, put_month)
 
     def is_action(self):
         return util.tick_convert_to_seconds(self.tick) > float(self.sche) and self.maturity != '' and len(self.product) > 5
@@ -251,7 +249,7 @@ class LongStaddle:
         ts.save_normal_volatility()
 
     def save_init_vol(self):
-        c, p = ts.get_init_vol()
+        c, p = ts.get_init_vol(call_month,put_month)
         import numpy
         return numpy.mean(c), numpy.mean(p)
 
@@ -272,6 +270,8 @@ if __name__ == '__main__':
         # s = time.time()
         all_day_tick = util.read_csvfile(file(day, 'rb'))
         date = str(day).split('/')[9].split('.')[0]
+        call_month, put_month, fut_month = util.get_month(date)
+        no_tran_date = util.get_no_tran_date(date)
         LS = LongStaddle(date)
 
         for row in all_day_tick: # one tick
@@ -281,7 +281,8 @@ if __name__ == '__main__':
                 LS.change_interval()
                 if LS.get_hsi_price() not in [None, 0.0, 0, "tick"]:
                     LS.change_sche()
-                    if date not in ['20131127', '20131128', '20131129', '20131130']:
+                    # if date not in ['20131127', '20131128', '20131129', '20131130']:
+                    if date not in no_tran_date:
                         transaction = LS.take_position()
                     LS.adjustment_position()
                     # close position
